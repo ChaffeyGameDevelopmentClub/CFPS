@@ -1,1 +1,5 @@
 Chaffey Game Development Club
+
+Sources:
+https://www.reddit.com/r/Unity3D/comments/awth13/where_can_i_find_prototyping_checkerboardstyled/
+https://wireframe.raspberrypi.com/books/unity-fps
