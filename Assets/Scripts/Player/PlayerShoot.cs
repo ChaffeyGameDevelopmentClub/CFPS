@@ -55,21 +55,24 @@ public class PlayerShoot : MonoBehaviour
     }
     private void Fire()
     {
-        if(currentMag <= 0)
+        if (currentMag <= 0)
         {
             Reload();
         }
-        RaycastHit hit;
-        Debug.DrawRay(playerCam.transform.position, playerCam.transform.TransformDirection(Vector3.forward), Color.red, 1f, false);
-        if (Physics.Raycast(playerCam.transform.position, playerCam.transform.TransformDirection(Vector3.forward), out hit))
+        else
         {
-            EnemyHealth enemy = hit.transform.GetComponent<EnemyHealth>();
-            if(enemy)
+            RaycastHit hit;
+            Debug.DrawRay(playerCam.transform.position, playerCam.transform.TransformDirection(Vector3.forward), Color.red, 1f, false);
+            if (Physics.Raycast(playerCam.transform.position, playerCam.transform.TransformDirection(Vector3.forward), out hit))
             {
-                enemy.TakeDamage(damage);
+                EnemyHealth enemy = hit.transform.GetComponent<EnemyHealth>();
+                if (enemy)
+                {
+                    enemy.TakeDamage(damage);
+                }
             }
+            currentMag -= 1;
         }
-        currentMag -= 1;
     }
     private void Reload()
     {
@@ -92,5 +95,9 @@ public class PlayerShoot : MonoBehaviour
         yield return new WaitForSeconds(reloadTime);
         currentMag = magSize;
         reloading = false;
+    }
+    public int GetCurrentMag()
+    {
+        return currentMag;
     }
 }
