@@ -11,11 +11,18 @@ public class PlayerShoot : MonoBehaviour
     [SerializeField] private float burstDelay = .1f;
     [SerializeField] private int magSize = 30;
     [SerializeField] private int damage = 30;
+    [SerializeField] private float reloadTime = 1f;
 
     private float shotTimer = 0;
+    private int currentMag;
+    private bool reloading;
 
     [SerializeField] Camera playerCam;
 
+    private void Start()
+    {
+        currentMag = magSize;
+    }
 
     // Update is called once per frame
     void Update()
@@ -48,6 +55,10 @@ public class PlayerShoot : MonoBehaviour
     }
     private void Fire()
     {
+        if(currentMag <= 0)
+        {
+            Reload();
+        }
         RaycastHit hit;
         Debug.DrawRay(playerCam.transform.position, playerCam.transform.TransformDirection(Vector3.forward), Color.red, 1f, false);
         if (Physics.Raycast(playerCam.transform.position, playerCam.transform.TransformDirection(Vector3.forward), out hit))
@@ -58,6 +69,14 @@ public class PlayerShoot : MonoBehaviour
                 enemy.TakeDamage(damage);
             }
         }
+        currentMag -= 1;
+    }
+    private void Reload()
+    {
+        if(currentMag == magSize)
+            return;
+        if(!reloading)
+            StartCoroutine(ReloadStart());
     }
     IEnumerator Burst()
     {
@@ -66,5 +85,12 @@ public class PlayerShoot : MonoBehaviour
             Fire();
             yield return new WaitForSeconds(burstDelay);
         }
+    }
+    IEnumerator ReloadStart()
+    {
+        reloading = true;
+        yield return new WaitForSeconds(reloadTime);
+        currentMag = magSize;
+        reloading = false;
     }
 }
