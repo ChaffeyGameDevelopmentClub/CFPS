@@ -66,11 +66,12 @@ public class PlayerShoot : MonoBehaviour
             if (Physics.Raycast(playerCam.transform.position, playerCam.transform.TransformDirection(Vector3.forward), out hit))
             {
                 if (hit.transform.CompareTag("Enemy"))
-            {
-                EnemyBase enemy = hit.transform.GetComponent<EnemyBase>();
-                enemy.TakeDamage(damage);
+                {
+                    EnemyBase enemy = hit.transform.GetComponent<EnemyBase>();
+                    enemy.TakeDamage(damage);
+                }
+                currentMag -= 1;
             }
-            currentMag -= 1;
         }
     }
     private void Reload()
