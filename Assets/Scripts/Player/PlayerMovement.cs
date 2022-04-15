@@ -56,7 +56,7 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetButtonDown("Jump") && playerState == PlayerState.Grounded) {
             playerState = PlayerState.Jumping;
         }
-        Debug.Log(playerState);
+        //Debug.Log(playerState);
     }
 
     //Process Physics
