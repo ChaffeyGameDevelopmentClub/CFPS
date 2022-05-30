@@ -119,7 +119,7 @@ public class Lobby : MonoBehaviour
         Debug.Log("[STEAM] Called: JoinLobby()");
     }
 
-    private void onLobbyEntered(LobbyEnter_t pCallback, bool bIOFailure) 
+    private void OnLobbyEntered(LobbyEnter_t pCallback, bool bIOFailure) 
     {
         Debug.Log("[STEAM] Lobby Entered: " + pCallback.m_ulSteamIDLobby);
     }
