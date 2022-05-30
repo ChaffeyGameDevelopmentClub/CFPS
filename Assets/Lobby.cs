@@ -11,9 +11,10 @@ using Steamworks;
 
 public class Lobby : MonoBehaviour
 {
-    ArrayList members = new ArrayList();
+    List<CSteamID> members = new List<CSteamID>();
     const int MAX_MEMBERS = 8;
     private CSteamID m_Lobby = new CSteamID(0); //Current lobby ID
+    private CSteamID currentUserID = SteamUser.GetSteamID();
     private string sessionKey = "EKRX82Z";
     private string gameID = "CFPS";
 
@@ -25,6 +26,7 @@ public class Lobby : MonoBehaviour
     }
 
     //Callback Declarations
+    protected Callback<LobbyDataUpdate_t> m_LobbyDataUpdate;
 
 
     //Callresult Declarations
@@ -37,8 +39,9 @@ public class Lobby : MonoBehaviour
     {
         if (SteamManager.Initialized)
         {
-      
+
             //Callbacks
+            m_LobbyDataUpdate = Callback<LobbyDataUpdate_t>.Create(OnLobbyDataUpdate);
 
             //CallResults
             m_OnLobbyCreatedCallResult = CallResult<LobbyCreated_t>.Create(OnLobbyCreated);
@@ -54,8 +57,7 @@ public class Lobby : MonoBehaviour
         {
             Debug.Log("[STEAM] Initialized");
             Debug.Log("[STEAM] Current Username: " + SteamFriends.GetPersonaName());
-            //CreateLobby();
-            RequestLobby(sessionKey);
+            members.Add(currentUserID);
         }
         else {
             Debug.LogError("[STEAM] Not Initialized");
@@ -95,20 +97,47 @@ public class Lobby : MonoBehaviour
         Debug.Log("[STEAM] Called: RequestLobbyList()");
     }
 
+    private void UpdateLobbyMembers() {
+        Debug.Log("[STEAM] Updating lobby member list for " + m_Lobby.m_SteamID);
+        members.Clear();
+        members.Add(currentUserID);
+        if (m_Lobby.m_SteamID > 0) { 
+            int numMembers = SteamMatchmaking.GetNumLobbyMembers(m_Lobby);
+            for (int i = 0; i < numMembers; i++) {
+                CSteamID member = SteamMatchmaking.GetLobbyMemberByIndex(m_Lobby, i);
+                Debug.Log(SteamFriends.GetFriendPersonaName(member));
+                if (member != currentUserID) {
+                    members.Add(member);
+                }
+            }
+        }
+    
+    }
+
     /*
      *******************
      * ON EVENT METHODS
      *******************
      */
 
+
+    /*
+     * Callresult
+     * The result of SteamMatchmaking.CreateLobby()
+     */
     private void OnLobbyCreated(LobbyCreated_t pCallback, bool bIOFailure)
     {
         Debug.Log("[STEAM] " + "[" + LobbyCreated_t.k_iCallback + " - LobbyCreated] - " + pCallback.m_eResult + " -- " + pCallback.m_ulSteamIDLobby);
         m_Lobby = (CSteamID)pCallback.m_ulSteamIDLobby;
         SteamMatchmaking.SetLobbyData(m_Lobby, "sessionKey", sessionKey);
         SteamMatchmaking.SetLobbyData(m_Lobby, "game", gameID);
+        UpdateLobbyMembers();
     }
 
+    /*
+     * Callresult
+     * The result of SteamMatchmaking.RequestLobbyList()
+     */
     private void OnLobbyMatchList(LobbyMatchList_t pCallback, bool bIOFailure)
     {
         Debug.Log("[STEAM] " + "[" + LobbyMatchList_t.k_iCallback + " - LobbyMatchList] - " + pCallback.m_nLobbiesMatching);
@@ -119,9 +148,25 @@ public class Lobby : MonoBehaviour
         Debug.Log("[STEAM] Called: JoinLobby()");
     }
 
+    /*
+     * Callresult
+     * The result of SteamMatchmaking.JoinLobby()
+     */
     private void OnLobbyEntered(LobbyEnter_t pCallback, bool bIOFailure) 
     {
         Debug.Log("[STEAM] Lobby Entered: " + pCallback.m_ulSteamIDLobby);
+        m_Lobby = new CSteamID(pCallback.m_ulSteamIDLobby);
+        UpdateLobbyMembers();
     }
+
+    /*
+     * Callback
+     * Called when lobby data changes
+     */
+    private void OnLobbyDataUpdate(LobbyDataUpdate_t pCallback) {
+        Debug.Log("[STEAM] Lobby data has updated for " + m_Lobby.m_SteamID);
+        UpdateLobbyMembers();
+    }
+
 
 }
