@@ -14,6 +14,8 @@ public class Lobby : MonoBehaviour
     ArrayList members = new ArrayList();
     const int MAX_MEMBERS = 8;
     private CSteamID m_Lobby = new CSteamID(0); //Current lobby ID
+    private string sessionKey = "EKRX82Z";
+    private string gameID = "CFPS";
 
 
     enum MsgType : uint
@@ -23,36 +25,25 @@ public class Lobby : MonoBehaviour
     }
 
     //Callback Declarations
-    protected Callback<P2PSessionRequest_t> m_P2PSessionRequest;
-    protected Callback<P2PSessionConnectFail_t> m_P2PSessionConnectFail;
-    protected Callback<SocketStatusCallback_t> m_SocketStatusCallback;
-    protected Callback<LobbyEnter_t> m_LobbyEnter;
-    protected Callback<LobbyDataUpdate_t> m_LobbyDataUpdate;
-    protected Callback<LobbyGameCreated_t> m_LobbyGameCreated;
+
 
     //Callresult Declarations
-    private CallResult<LobbyEnter_t> OnLobbyEnterCallResult;
-    private CallResult<LobbyMatchList_t> OnLobbyMatchListCallResult;
-    private CallResult<LobbyCreated_t> OnLobbyCreatedCallResult;
+    private CallResult<LobbyCreated_t> m_OnLobbyCreatedCallResult;
+    private CallResult<LobbyMatchList_t> m_OnLobbyMatchListCallResult;
+    private CallResult<LobbyEnter_t> m_OnLobbyEnteredCallResult;
+
 
     private void OnEnable()
     {
         if (SteamManager.Initialized)
         {
+      
             //Callbacks
-            m_P2PSessionRequest = Callback<P2PSessionRequest_t>.Create(OnP2PSessionRequest);
-            m_P2PSessionConnectFail = Callback<P2PSessionConnectFail_t>.Create(OnP2PSessionConnectFail);
-            m_SocketStatusCallback = Callback<SocketStatusCallback_t>.Create(OnSocketStatusCallback);
-            m_LobbyEnter = Callback<LobbyEnter_t>.Create(OnLobbyEnter);
-            m_LobbyDataUpdate = Callback<LobbyDataUpdate_t>.Create(OnLobbyDataUpdate);
-            m_LobbyGameCreated = Callback<LobbyGameCreated_t>.Create(OnLobbyGameCreated);
 
             //CallResults
-            OnLobbyEnterCallResult = CallResult<LobbyEnter_t>.Create(OnLobbyEnter);
-            OnLobbyMatchListCallResult = CallResult<LobbyMatchList_t>.Create(OnLobbyMatchList);
-            OnLobbyCreatedCallResult = CallResult<LobbyCreated_t>.Create(OnLobbyCreated);
-
-
+            m_OnLobbyCreatedCallResult = CallResult<LobbyCreated_t>.Create(OnLobbyCreated);
+            m_OnLobbyMatchListCallResult = CallResult<LobbyMatchList_t>.Create(OnLobbyMatchList);
+            m_OnLobbyEnteredCallResult = CallResult<LobbyEnter_t>.Create(OnLobbyEntered);
         }
     }
 
@@ -62,6 +53,9 @@ public class Lobby : MonoBehaviour
         if (SteamManager.Initialized)
         {
             Debug.Log("[STEAM] Initialized");
+            Debug.Log("[STEAM] Current Username: " + SteamFriends.GetPersonaName());
+            //CreateLobby();
+            RequestLobby(sessionKey);
         }
         else {
             Debug.LogError("[STEAM] Not Initialized");
@@ -79,46 +73,56 @@ public class Lobby : MonoBehaviour
 
     private void CreateLobby()
     {
-        if (SteamManager.Initialized && m_Lobby.m_SteamID > 0)
+        if (SteamManager.Initialized && m_Lobby.m_SteamID == 0)
         {
-            SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, MAX_MEMBERS);
+            SteamAPICall_t handle = SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, MAX_MEMBERS);
+            m_OnLobbyCreatedCallResult.Set(handle);
+            Debug.Log("[STEAM] Called: CreateLobby()");
+           
         }
     }
 
-    void OnP2PSessionRequest(P2PSessionRequest_t pCallback)
+    private void RequestLobby(string sessionKey) 
     {
-        Debug.Log("[" + P2PSessionRequest_t.k_iCallback + " - P2PSessionRequest] - " + pCallback.m_steamIDRemote);
-
-        bool ret = SteamNetworking.AcceptP2PSessionWithUser(pCallback.m_steamIDRemote);
-        print("SteamNetworking.AcceptP2PSessionWithUser(" + pCallback.m_steamIDRemote + ") - " + ret);
-
-        //m_RemoteSteamId = pCallback.m_steamIDRemote;
+        //Filter Distance (worldwide)
+        SteamMatchmaking.AddRequestLobbyListDistanceFilter(ELobbyDistanceFilter.k_ELobbyDistanceFilterWorldwide);
+        //Filter seskey
+        SteamMatchmaking.AddRequestLobbyListStringFilter("sessionKey", sessionKey, ELobbyComparison.k_ELobbyComparisonEqual);
+        //Filter gameID
+        SteamMatchmaking.AddRequestLobbyListStringFilter("game", gameID, ELobbyComparison.k_ELobbyComparisonEqual);
+        SteamAPICall_t handle = SteamMatchmaking.RequestLobbyList();
+        m_OnLobbyMatchListCallResult.Set(handle);
+        Debug.Log("[STEAM] Called: RequestLobbyList()");
     }
 
-    void OnP2PSessionConnectFail(P2PSessionConnectFail_t pCallback)
-    {
-        Debug.Log("[" + P2PSessionConnectFail_t.k_iCallback + " - P2PSessionConnectFail] - " + pCallback.m_steamIDRemote + " -- " + pCallback.m_eP2PSessionError);
-    }
+    /*
+     *******************
+     * ON EVENT METHODS
+     *******************
+     */
 
-    void OnSocketStatusCallback(SocketStatusCallback_t pCallback)
+    private void OnLobbyCreated(LobbyCreated_t pCallback, bool bIOFailure)
     {
-        Debug.Log("[" + SocketStatusCallback_t.k_iCallback + " - SocketStatusCallback] - " + pCallback.m_hSocket + " -- " + pCallback.m_hListenSocket + " -- " + pCallback.m_steamIDRemote + " -- " + pCallback.m_eSNetSocketState);
-    }
-
-    void OnLobbyCreated(LobbyCreated_t pCallback, bool bIOFailure)
-    {
-        Debug.Log("[" + LobbyCreated_t.k_iCallback + " - LobbyCreated] - " + pCallback.m_eResult + " -- " + pCallback.m_ulSteamIDLobby);
-
+        Debug.Log("[STEAM] " + "[" + LobbyCreated_t.k_iCallback + " - LobbyCreated] - " + pCallback.m_eResult + " -- " + pCallback.m_ulSteamIDLobby);
         m_Lobby = (CSteamID)pCallback.m_ulSteamIDLobby;
+        SteamMatchmaking.SetLobbyData(m_Lobby, "sessionKey", sessionKey);
+        SteamMatchmaking.SetLobbyData(m_Lobby, "game", gameID);
     }
 
-    void OnLobbyCreated(LobbyGameCreated_t pCallback)
+    private void OnLobbyMatchList(LobbyMatchList_t pCallback, bool bIOFailure)
     {
-        Debug.Log("[" + LobbyGameCreated_t.k_iCallback + " - LobbyGameCreated] - " + pCallback.m_ulSteamIDLobby + " -- " + pCallback.m_ulSteamIDGameServer + " -- " + pCallback.m_unIP + " -- " + pCallback.m_usPort);
+        Debug.Log("[STEAM] " + "[" + LobbyMatchList_t.k_iCallback + " - LobbyMatchList] - " + pCallback.m_nLobbiesMatching);
+        CSteamID match = SteamMatchmaking.GetLobbyByIndex(0); //Get lobby ID from first match
+
+        SteamAPICall_t handle = SteamMatchmaking.JoinLobby(match);
+        m_OnLobbyMatchListCallResult.Set(handle);
+        Debug.Log("[STEAM] Called: JoinLobby()");
     }
 
-    void OnLobbyMatchList(LobbyMatchList_t pCallback, bool bIOFailure)
+    private void onLobbyEntered(LobbyEnter_t pCallback, bool bIOFailure) 
     {
-        Debug.Log("[" + LobbyMatchList_t.k_iCallback + " - LobbyMatchList] - " + pCallback.m_nLobbiesMatching);
+        Debug.Log("[STEAM] Lobby Entered: " + pCallback.m_ulSteamIDLobby);
+
     }
+
 }
