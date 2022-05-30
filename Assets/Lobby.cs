@@ -144,9 +144,10 @@ public class Lobby : MonoBehaviour
     {
         Debug.Log("[STEAM] " + "[" + LobbyMatchList_t.k_iCallback + " - LobbyMatchList] - " + pCallback.m_nLobbiesMatching);
         CSteamID match = SteamMatchmaking.GetLobbyByIndex(0); //Get lobby ID from first match
+        Debug.Log("[STEAM] Attempting to join "  + match);
 
         SteamAPICall_t handle = SteamMatchmaking.JoinLobby(match);
-        m_OnLobbyMatchListCallResult.Set(handle);
+        m_OnLobbyEnteredCallResult.Set(handle);
         Debug.Log("[STEAM] Called: JoinLobby()");
     }
 
