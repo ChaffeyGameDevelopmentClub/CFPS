@@ -14,7 +14,7 @@ public class Lobby : MonoBehaviour
     List<CSteamID> members = new List<CSteamID>();
     const int MAX_MEMBERS = 8;
     private CSteamID m_Lobby = new CSteamID(0); //Current lobby ID
-    private CSteamID currentUserID = SteamUser.GetSteamID();
+    private CSteamID currentUserID;
     private string sessionKey = "EKRX82Z";
     private string gameID = "CFPS";
 
@@ -55,9 +55,11 @@ public class Lobby : MonoBehaviour
     {
         if (SteamManager.Initialized)
         {
+            currentUserID = SteamUser.GetSteamID();
             Debug.Log("[STEAM] Initialized");
             Debug.Log("[STEAM] Current Username: " + SteamFriends.GetPersonaName());
             members.Add(currentUserID);
+            CreateLobby();
         }
         else {
             Debug.LogError("[STEAM] Not Initialized");
