@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
+using Unity.Netcode;
+
 
 /*
  * Credit to example repositories
@@ -9,7 +11,7 @@ using Steamworks;
  * https://github.com/rlabrecque/Steamworks.NET-Test/blob/master/Assets/Scripts/SteamMatchmakingTest.cs
  */
 
-public class Lobby : MonoBehaviour
+public class Lobby : NetworkBehaviour
 {
     List<CSteamID> members = new List<CSteamID>();
     const int MAX_MEMBERS = 8;
