@@ -73,6 +73,7 @@ public class Lobby : MonoBehaviour
             Debug.Log("[STEAM] Initialized");
             Debug.Log("[STEAM] Current Username: " + SteamFriends.GetPersonaName());
             members.Add(currentUserID);
+            CreateLobby();
         }
         else 
         {
@@ -300,9 +301,9 @@ public class Lobby : MonoBehaviour
         SteamMatchmaking.SetLobbyMemberData(m_Lobby, "isHost", "false");
         Debug.Log("[STEAM] Lobby Entered: " + pCallback.m_ulSteamIDLobby);
         m_Lobby = new CSteamID(pCallback.m_ulSteamIDLobby);
+        localIsHost = false;
         connected = true;
         UpdateLobbyMembers();
-        
     }
 
     /*
