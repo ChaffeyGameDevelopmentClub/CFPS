@@ -43,8 +43,6 @@ public class Lobby : MonoBehaviour
     private CallResult<LobbyCreated_t> m_OnLobbyCreatedCallResult;
     private CallResult<LobbyMatchList_t> m_OnLobbyMatchListCallResult;
     private CallResult<LobbyEnter_t> m_OnLobbyEnteredCallResult;
-
-
     private void OnEnable()
     {
         if (SteamManager.Initialized)
@@ -82,8 +80,7 @@ public class Lobby : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         if (SteamManager.Initialized && m_Lobby.m_SteamID > 0) 
         {
@@ -226,7 +223,13 @@ public class Lobby : MonoBehaviour
     private void LeaveLobby() {
         SteamMatchmaking.LeaveLobby(m_Lobby);
         m_Lobby = new CSteamID(0);
-        if (localIsHost) {
+        if (localIsHost)
+        {
+            hostID = new CSteamID(0);
+        }
+        else 
+        {
+            SteamNetworking.CloseP2PSessionWithUser(hostID);
             hostID = new CSteamID(0);
         }
 
