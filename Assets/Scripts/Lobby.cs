@@ -23,6 +23,7 @@ public class Lobby : NetworkBehaviour
     private bool localIsHost = false;
     private bool connected = false;
     const int READLIMIT = 999;
+    private NetworkManager networkManager;
 
     enum MsgType : uint
     {
@@ -61,6 +62,8 @@ public class Lobby : NetworkBehaviour
             m_OnLobbyCreatedCallResult = CallResult<LobbyCreated_t>.Create(OnLobbyCreated);
             m_OnLobbyMatchListCallResult = CallResult<LobbyMatchList_t>.Create(OnLobbyMatchList);
             m_OnLobbyEnteredCallResult = CallResult<LobbyEnter_t>.Create(OnLobbyEntered);
+
+            networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         }
     }
 
@@ -180,6 +183,7 @@ public class Lobby : NetworkBehaviour
             Debug.Log("[STEAM] Called: CreateLobby()");
             localIsHost = true;
             hostID = currentUserID;
+            networkManager.StartHost();
         }
     }
 
@@ -280,6 +284,7 @@ public class Lobby : NetworkBehaviour
         connected = true;
         UpdateLobbyMembers();
         SteamMatchmaking.SetLobbyMemberData(m_Lobby, "isHost", "true");
+        
     }
 
     /*
@@ -309,6 +314,7 @@ public class Lobby : NetworkBehaviour
         localIsHost = false;
         connected = true;
         UpdateLobbyMembers();
+        networkManager.StartClient();
     }
 
     /*
